@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["ringdeque"]
+
+[workspace.dependencies]
+itertools = "0.14.0"
