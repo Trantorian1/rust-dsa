@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["ringdeque"]
+members = [ "linkedlist","ringdeque"]
 
 [workspace.dependencies]
 itertools = "0.14.0"
