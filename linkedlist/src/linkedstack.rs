@@ -1,48 +1,111 @@
-pub struct LinkedStack {
-    head: Link,
+pub struct LinkedStack<T> {
+    head: Link<T>,
 }
 
-enum Link {
-    Empty,
-    More(Box<Node>),
+type Link<T> = Option<Box<Node<T>>>;
+
+struct Node<T> {
+    elem: T,
+    next: Link<T>,
 }
 
-struct Node {
-    elem: i32,
-    next: Link,
-}
-
-impl Drop for LinkedStack {
-    /// This drops each node _iteratively_ since we are replacing `node.next` with [`Link::Empty`],
+impl<T> Drop for LinkedStack<T> {
+    /// This drops each node _iteratively_ since we are replacing `node.next` with [`None`],
     /// meaning that the drop implementation for [`Box`] will not be called on it. Instead, each
     /// node is dropped when it goes out of scope at the end of each `while` iteration. Neat!
     fn drop(&mut self) {
-        while let Link::More(mut node) = std::mem::replace(&mut self.head, Link::Empty) {
-            self.head = std::mem::replace(&mut node.next, Link::Empty);
+        while let Some(mut node) = self.head.take() {
+            self.head = node.next.take();
         }
     }
 }
 
-impl LinkedStack {
+impl<T> LinkedStack<T> {
     pub fn new() -> Self {
-        Self { head: Link::Empty }
+        Self { head: None }
     }
 
-    pub fn push(&mut self, elem: i32) {
+    pub fn push(&mut self, elem: T) {
         let new_node = Box::new(Node {
             elem,
-            next: std::mem::replace(&mut self.head, Link::Empty),
+            next: self.head.take(),
         });
-        self.head = Link::More(new_node);
+        self.head = Some(new_node);
     }
 
-    pub fn pop(&mut self) -> Option<i32> {
-        match std::mem::replace(&mut self.head, Link::Empty) {
-            Link::Empty => None,
-            Link::More(node) => {
-                self.head = node.next;
-                Some(node.elem)
-            }
+    pub fn pop(&mut self) -> Option<T> {
+        self.head.take().map(|node| {
+            self.head = node.next;
+            node.elem
+        })
+    }
+
+    pub fn peek(&self) -> Option<&T> {
+        self.head.as_ref().map(|node| &node.elem)
+    }
+
+    pub fn peek_mut(&mut self) -> Option<&mut T> {
+        self.head.as_mut().map(|node| &mut node.elem)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        Iter {
+            node: self.head.as_deref(),
         }
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        IterMut {
+            node: self.head.as_deref_mut(),
+        }
+    }
+}
+
+impl<T> IntoIterator for LinkedStack<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self)
+    }
+}
+
+pub struct IntoIter<T>(LinkedStack<T>);
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop()
+    }
+}
+
+pub struct Iter<'a, T> {
+    node: Option<&'a Node<T>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.node.map(|node| {
+            self.node = node.next.as_deref();
+            &node.elem
+        })
+    }
+}
+
+pub struct IterMut<'a, T> {
+    node: Option<&'a mut Node<T>>,
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.node.take().map(|node| {
+            self.node = node.next.as_deref_mut();
+            &mut node.elem
+        })
     }
 }
