@@ -183,3 +183,65 @@ impl<'a, T> Iterator for IterMut<'a, T> {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn linked_stack_new() {
+        assert_eq!(
+            LinkedStack::<()>::new(),
+            LinkedStack {
+                head: None,
+                size: 0
+            }
+        );
+    }
+
+    #[test]
+    fn linked_stack_push_pop() {
+        let mut linked_stack = LinkedStack::new();
+
+        assert_eq!(linked_stack.pop(), None);
+        assert_eq!(linked_stack.len(), 0);
+        assert!(linked_stack.is_empty());
+
+        for n in 0..10 {
+            linked_stack.push(n);
+        }
+
+        assert_eq!(linked_stack.len(), 10);
+        assert!(!linked_stack.is_empty());
+
+        for n in (0..10).rev() {
+            assert_eq!(linked_stack.pop(), Some(n));
+        }
+
+        assert_eq!(linked_stack.pop(), None);
+        assert_eq!(linked_stack.len(), 0);
+        assert!(linked_stack.is_empty())
+    }
+
+    #[test]
+    fn linked_stack_peek() {
+        let mut linked_stack = LinkedStack::new();
+        assert_eq!(linked_stack.peek(), None);
+
+        for n in 0..10 {
+            linked_stack.push(n);
+            assert_eq!(linked_stack.peek(), Some(&n));
+        }
+    }
+
+    #[test]
+    fn linked_stack_peek_mut() {
+        let mut linked_stack = LinkedStack::new();
+
+        for n in 0..10 {
+            linked_stack.push(n);
+            *linked_stack.peek_mut().unwrap() += 1;
+            assert_eq!(linked_stack.peek(), Some(n + 1).as_ref());
+        }
+    }
+}
