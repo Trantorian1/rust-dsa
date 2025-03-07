@@ -3,6 +3,14 @@
 version = 4
 
 [[package]]
+name = "dsa-linkedrefcount"
+version = "0.1.0"
+dependencies = [
+ "dsa-util",
+ "itertools",
+]
+
+[[package]]
 name = "dsa-linkedstack"
 version = "0.1.0"
 dependencies = [
