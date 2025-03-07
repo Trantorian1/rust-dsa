@@ -1,7 +1,6 @@
 [package]
-name = "linkedlist"
+name = "dsa-util"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-itertools.workspace = true

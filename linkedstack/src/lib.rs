@@ -185,7 +185,9 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 }
 
 #[cfg(test)]
-mod test {
+mod est {
+    use dsa_util::DropCounter;
+
     use super::*;
 
     #[test]
@@ -243,5 +245,104 @@ mod test {
             *linked_stack.peek_mut().unwrap() += 1;
             assert_eq!(linked_stack.peek(), Some(n + 1).as_ref());
         }
+    }
+
+    #[test]
+    fn linked_stack_debug() {
+        let mut linked_stack = LinkedStack::new();
+        for n in 0..10 {
+            linked_stack.push(n);
+        }
+
+        assert_eq!(
+            &format!("{linked_stack:?}"),
+            "[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]"
+        );
+    }
+
+    #[test]
+    fn linked_stack_clone() {
+        let mut linked_stack = LinkedStack::new();
+        for n in 0..10 {
+            linked_stack.push(n)
+        }
+
+        let mut linked_stack_clone = linked_stack.clone();
+        let mut head = linked_stack_clone.head.as_mut();
+
+        while let Some(node) = head {
+            node.elem += 1;
+            head = node.next.as_mut();
+        }
+
+        for n in (0..10).rev() {
+            assert_eq!(linked_stack.pop(), Some(n));
+            assert_eq!(linked_stack_clone.pop(), Some(n + 1));
+        }
+    }
+
+    #[test]
+    fn linked_stack_drop() {
+        let mut linked_stack = LinkedStack::new();
+        let rc = std::rc::Rc::default();
+
+        for n in 0..10 {
+            linked_stack.push(DropCounter::new(&rc, vec![n]));
+        }
+
+        drop(linked_stack);
+        assert_eq!(rc.get(), 10);
+    }
+
+    #[test]
+    fn linked_stack_iter_simple() {
+        let mut linked_stack = LinkedStack::new();
+        for n in 0..10 {
+            linked_stack.push(n);
+        }
+
+        let mut iter = linked_stack.iter();
+        for n in (0..10).rev() {
+            assert_eq!(iter.next(), Some(n).as_ref());
+        }
+
+        assert_eq!(iter.next(), None);
+        drop(iter);
+
+        for n in (0..10).rev() {
+            assert_eq!(linked_stack.pop(), Some(n));
+        }
+        assert_eq!(linked_stack.pop(), None);
+    }
+
+    #[test]
+    fn linked_stack_iter_mut() {
+        let mut linked_stack = LinkedStack::new();
+        for n in 0..10 {
+            linked_stack.push(n);
+        }
+
+        for node in linked_stack.iter_mut() {
+            *node += 1;
+        }
+
+        for n in (0..10).rev() {
+            assert_eq!(linked_stack.pop(), Some(n + 1));
+        }
+        assert_eq!(linked_stack.pop(), None);
+    }
+
+    #[test]
+    fn linked_stack_into_iter() {
+        let mut linked_stack = LinkedStack::new();
+        for n in 0..10 {
+            linked_stack.push(n);
+        }
+
+        let mut iter = linked_stack.into_iter();
+        for n in (0..10).rev() {
+            assert_eq!(iter.next(), Some(n));
+        }
+        assert_eq!(iter.next(), None);
     }
 }

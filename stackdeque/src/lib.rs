@@ -3,19 +3,19 @@ use itertools::{
     Itertools,
 };
 
-pub struct RingDeque<const CAPACITY: usize, T> {
+pub struct StackDeque<const CAPACITY: usize, T> {
     ring: [std::mem::MaybeUninit<T>; CAPACITY],
     start: usize,
     size: usize,
 }
 
-impl<const CAPACITY: usize, T: std::fmt::Debug> std::fmt::Debug for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T: std::fmt::Debug> std::fmt::Debug for StackDeque<CAPACITY, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self.iter()).finish()
     }
 }
 
-impl<const CAPACITY: usize, T: Clone> Clone for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T: Clone> Clone for StackDeque<CAPACITY, T> {
     fn clone(&self) -> Self {
         let mut ring = Self::new();
         for item in self.iter().cloned() {
@@ -25,7 +25,7 @@ impl<const CAPACITY: usize, T: Clone> Clone for RingDeque<CAPACITY, T> {
     }
 }
 
-impl<const CAPACITY: usize, T: PartialEq> PartialEq for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T: PartialEq> PartialEq for StackDeque<CAPACITY, T> {
     fn eq(&self, other: &Self) -> bool {
         self.size == other.size
             && self
@@ -38,9 +38,9 @@ impl<const CAPACITY: usize, T: PartialEq> PartialEq for RingDeque<CAPACITY, T> {
                 .into_inner()
     }
 }
-impl<const CAPACITY: usize, T: Eq> Eq for RingDeque<CAPACITY, T> {}
+impl<const CAPACITY: usize, T: Eq> Eq for StackDeque<CAPACITY, T> {}
 
-impl<const CAPACITY: usize, T> Drop for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T> Drop for StackDeque<CAPACITY, T> {
     fn drop(&mut self) {
         while self.size != 0 {
             unsafe { self.ring[self.start].assume_init_drop() };
@@ -50,13 +50,13 @@ impl<const CAPACITY: usize, T> Drop for RingDeque<CAPACITY, T> {
     }
 }
 
-impl<const CAPACITY: usize, T> Default for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T> Default for StackDeque<CAPACITY, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const CAPACITY: usize, T> RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T> StackDeque<CAPACITY, T> {
     pub fn new() -> Self {
         assert!(
             CAPACITY > 0,
@@ -200,7 +200,7 @@ impl<const CAPACITY: usize, T> RingDeque<CAPACITY, T> {
     }
 }
 
-impl<const CAPACITY: usize, T> IntoIterator for RingDeque<CAPACITY, T> {
+impl<const CAPACITY: usize, T> IntoIterator for StackDeque<CAPACITY, T> {
     type Item = T;
     type IntoIter = IntoIter<CAPACITY, T>;
 
@@ -281,7 +281,7 @@ impl<const CAPACITY: usize, T> DoubleEndedIterator for IterMut<'_, CAPACITY, T> 
 }
 
 pub struct IntoIter<const CAPACITY: usize, T> {
-    me: std::mem::ManuallyDrop<RingDeque<CAPACITY, T>>,
+    me: std::mem::ManuallyDrop<StackDeque<CAPACITY, T>>,
 }
 
 impl<const CAPACITY: usize, T> Drop for IntoIter<CAPACITY, T> {
@@ -330,24 +330,26 @@ fn wrapping_index<const CAPACITY: usize>(n: usize) -> usize {
 
 #[cfg(test)]
 mod test {
+    use dsa_util::DropCounter;
+
     use super::*;
 
     #[test]
-    fn ring_new() {
-        let ring = RingDeque::<10, ()>::new();
+    fn stack_deque_new() {
+        let ring = StackDeque::<10, ()>::new();
         assert_eq!(ring.len(), 0);
         assert_eq!(ring.capacity(), 10);
     }
 
     #[test]
     #[should_panic]
-    fn ring_new_panic_zero_capacity() {
-        let _ = RingDeque::<0, ()>::new();
+    fn stack_deque_new_panic_zero_capacity() {
+        let _ = StackDeque::<0, ()>::new();
     }
 
     #[test]
-    fn ring_push_back_simple() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_back_simple() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -369,8 +371,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_front_simple() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_front_simple() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in (0..10).rev() {
             ring.push_front(n);
         }
@@ -393,8 +395,8 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn ring_push_back_panic_max_capacity() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_back_panic_max_capacity() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..11 {
             ring.push_back(n);
         }
@@ -402,16 +404,16 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn ring_push_front_panic_max_capacity() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_front_panic_max_capacity() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..11 {
             ring.push_front(n);
         }
     }
 
     #[test]
-    fn ring_push_back_try() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_back_try() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             assert!(ring.try_push_back(n).is_none());
         }
@@ -419,8 +421,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_front_try() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_front_try() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in (0..10).rev() {
             assert!(ring.try_push_front(n).is_none());
         }
@@ -428,8 +430,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_back_pop_back() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_back_pop_back() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -448,8 +450,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_back_pop_front() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_back_pop_front() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -484,8 +486,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_front_pop_front() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_front_pop_front() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in (0..10).rev() {
             ring.push_front(n);
         }
@@ -504,8 +506,8 @@ mod test {
     }
 
     #[test]
-    fn ring_push_front_pop_back() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_push_front_pop_back() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in (0..10).rev() {
             ring.push_front(n);
         }
@@ -540,8 +542,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_back_simple() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_peek_back_simple() {
+        let mut ring = StackDeque::<10, i32>::new();
         assert_eq!(ring.peek_back(), None);
         for n in 0..10 {
             ring.push_back(n);
@@ -550,8 +552,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_back_no_double_free() {
-        let mut ring = RingDeque::<10, Vec<i32>>::new();
+    fn stack_deque_peek_back_no_double_free() {
+        let mut ring = StackDeque::<10, Vec<i32>>::new();
         for n in 0..10 {
             ring.push_back(vec![n]);
             assert_eq!(ring.peek_back(), Some(&vec![n]));
@@ -560,8 +562,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_front_simple() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_peek_front_simple() {
+        let mut ring = StackDeque::<10, i32>::new();
         assert_eq!(ring.peek_front(), None);
         for n in (0..10).rev() {
             ring.push_front(n);
@@ -570,8 +572,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_front_no_free() {
-        let mut ring = RingDeque::<10, Vec<i32>>::new();
+    fn stack_deque_peek_front_no_free() {
+        let mut ring = StackDeque::<10, Vec<i32>>::new();
         for n in (0..10).rev() {
             ring.push_front(vec![n]);
             assert_eq!(ring.peek_front(), Some(&vec![n]));
@@ -580,8 +582,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_back_mut() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_peek_back_mut() {
+        let mut ring = StackDeque::<10, i32>::new();
         assert_eq!(ring.peek_back_mut(), None);
         for n in 0..10 {
             ring.push_back(n);
@@ -603,8 +605,8 @@ mod test {
     }
 
     #[test]
-    fn ring_peek_front_mut() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_peek_front_mut() {
+        let mut ring = StackDeque::<10, i32>::new();
         assert_eq!(ring.peek_front_mut(), None);
         for n in (0..10).rev() {
             ring.push_front(n);
@@ -627,8 +629,8 @@ mod test {
 
     // start < stop
     #[test]
-    fn ring_size_1() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_size_1() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..9 {
             ring.push_back(n);
         }
@@ -637,8 +639,8 @@ mod test {
 
     // start > stop
     #[test]
-    fn ring_size_2() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_size_2() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..5 {
             ring.push_back(n);
             assert_eq!(ring.pop_front(), Some(n));
@@ -652,15 +654,15 @@ mod test {
 
     // start == stop, init == true
     #[test]
-    fn ring_size_3() {
-        let ring = RingDeque::<10, i32>::new();
+    fn stack_deque_size_3() {
+        let ring = StackDeque::<10, i32>::new();
         assert_eq!(ring.len(), 0);
     }
 
     // start == stop, init == false
     #[test]
-    fn ring_size_4() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_size_4() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -668,8 +670,8 @@ mod test {
     }
 
     #[test]
-    fn ring_iter_forwards() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_iter_forwards() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n)
         }
@@ -699,8 +701,8 @@ mod test {
     }
 
     #[test]
-    fn ring_iter_reversed() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_iter_reversed() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n)
         }
@@ -730,8 +732,8 @@ mod test {
     }
 
     #[test]
-    fn ring_iter_mut_forwards() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_iter_mut_forwards() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -758,8 +760,8 @@ mod test {
     }
 
     #[test]
-    fn ring_iter_mut_reversed() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_iter_mut_reversed() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -788,8 +790,8 @@ mod test {
     }
 
     #[test]
-    fn ring_into_iter_forwards() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_into_iter_forwards() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n)
         }
@@ -801,8 +803,8 @@ mod test {
     }
 
     #[test]
-    fn ring_into_iter_reversed() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_into_iter_reversed() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n)
         }
@@ -814,8 +816,8 @@ mod test {
     }
 
     #[test]
-    fn ring_debug() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_debug() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n);
         }
@@ -824,13 +826,13 @@ mod test {
     }
 
     #[test]
-    fn ring_clone() {
-        let mut ring = RingDeque::<10, i32>::new();
+    fn stack_deque_clone() {
+        let mut ring = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring.push_back(n)
         }
 
-        let ring_clone = ring.clone();
+        let stack_deque_clone = ring.clone();
 
         unsafe {
             assert_eq!(ring.ring[0].assume_init(), 0);
@@ -848,29 +850,29 @@ mod test {
         assert_eq!(ring.len(), 10);
 
         unsafe {
-            assert_eq!(ring_clone.ring[0].assume_init(), 0);
-            assert_eq!(ring_clone.ring[1].assume_init(), 1);
-            assert_eq!(ring_clone.ring[2].assume_init(), 2);
-            assert_eq!(ring_clone.ring[3].assume_init(), 3);
-            assert_eq!(ring_clone.ring[4].assume_init(), 4);
-            assert_eq!(ring_clone.ring[5].assume_init(), 5);
-            assert_eq!(ring_clone.ring[6].assume_init(), 6);
-            assert_eq!(ring_clone.ring[7].assume_init(), 7);
-            assert_eq!(ring_clone.ring[8].assume_init(), 8);
-            assert_eq!(ring_clone.ring[9].assume_init(), 9);
+            assert_eq!(stack_deque_clone.ring[0].assume_init(), 0);
+            assert_eq!(stack_deque_clone.ring[1].assume_init(), 1);
+            assert_eq!(stack_deque_clone.ring[2].assume_init(), 2);
+            assert_eq!(stack_deque_clone.ring[3].assume_init(), 3);
+            assert_eq!(stack_deque_clone.ring[4].assume_init(), 4);
+            assert_eq!(stack_deque_clone.ring[5].assume_init(), 5);
+            assert_eq!(stack_deque_clone.ring[6].assume_init(), 6);
+            assert_eq!(stack_deque_clone.ring[7].assume_init(), 7);
+            assert_eq!(stack_deque_clone.ring[8].assume_init(), 8);
+            assert_eq!(stack_deque_clone.ring[9].assume_init(), 9);
         }
 
-        assert_eq!(ring_clone.len(), 10);
+        assert_eq!(stack_deque_clone.len(), 10);
     }
 
     #[test]
-    fn ring_eq() {
-        let mut ring1 = RingDeque::<10, i32>::new();
+    fn stack_deque_eq() {
+        let mut ring1 = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring1.push_back(n)
         }
 
-        let mut ring2 = RingDeque::<10, i32>::new();
+        let mut ring2 = StackDeque::<10, i32>::new();
         for n in 0..10 {
             ring2.push_back(n)
         }
@@ -878,30 +880,9 @@ mod test {
         assert_eq!(ring1, ring2);
     }
 
-    struct DropCounter<T> {
-        _val: T,
-        counter: std::rc::Rc<std::cell::Cell<usize>>,
-    }
-
-    impl<T> Drop for DropCounter<T> {
-        fn drop(&mut self) {
-            let count = self.counter.get() + 1;
-            self.counter.set(count);
-        }
-    }
-
-    impl<T> DropCounter<T> {
-        fn new(cell: &std::rc::Rc<std::cell::Cell<usize>>, val: T) -> Self {
-            Self {
-                _val: val,
-                counter: std::rc::Rc::clone(cell),
-            }
-        }
-    }
-
     #[test]
-    fn ring_drop_simple() {
-        let mut ring = RingDeque::<10, DropCounter<Vec<i32>>>::new();
+    fn stack_deque_drop_simple() {
+        let mut ring = StackDeque::<10, DropCounter<Vec<i32>>>::new();
         let rc = std::rc::Rc::default();
         for n in 0..10 {
             ring.push_back(DropCounter::new(&rc, vec![n]));
@@ -912,8 +893,8 @@ mod test {
     }
 
     #[test]
-    fn ring_drop_into_iter() {
-        let mut ring = RingDeque::<10, DropCounter<Vec<i32>>>::new();
+    fn stack_deque_drop_into_iter() {
+        let mut ring = StackDeque::<10, DropCounter<Vec<i32>>>::new();
         let rc = std::rc::Rc::default();
         for n in 0..10 {
             ring.push_back(DropCounter::new(&rc, vec![n]));

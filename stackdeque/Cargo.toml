@@ -1,7 +1,8 @@
 [package]
-name = "ringdeque"
+name = "dsa-stackdeque"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+dsa-util.workspace = true
 itertools.workspace = true

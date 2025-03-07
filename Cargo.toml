@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = [ "linkedlist","ringdeque"]
+members = ["linkedstack", "stackdeque", "util"]
 
 [workspace.dependencies]
+
+dsa-linkedstack.path = "linked/"
+dsa-stackdeque.path = "ring/"
+dsa-util.path = "util/"
+
 itertools = "0.14.0"

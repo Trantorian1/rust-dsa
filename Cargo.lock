@@ -3,6 +3,26 @@
 version = 4
 
 [[package]]
+name = "dsa-linkedstack"
+version = "0.1.0"
+dependencies = [
+ "dsa-util",
+ "itertools",
+]
+
+[[package]]
+name = "dsa-stackdeque"
+version = "0.1.0"
+dependencies = [
+ "dsa-util",
+ "itertools",
+]
+
+[[package]]
+name = "dsa-util"
+version = "0.1.0"
+
+[[package]]
 name = "either"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15,18 +35,4 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
-]
-
-[[package]]
-name = "linkedlist"
-version = "0.1.0"
-dependencies = [
- "itertools",
-]
-
-[[package]]
-name = "ringdeque"
-version = "0.1.0"
-dependencies = [
- "itertools",
 ]
