@@ -120,6 +120,14 @@ impl<T> LinkedRefCount<T> {
         self.head.as_ref().map(|head| &head.elem)
     }
 
+    pub fn len(&self) -> usize {
+        self.size
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.size == 0
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         Iter { head: &self.head }
     }
@@ -168,4 +176,102 @@ impl<'a, T> Iterator for Iter<'a, T> {
             &head.elem
         })
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn linked_ref_count_new() {
+        assert_eq!(
+            LinkedRefCount::<()>::new(),
+            LinkedRefCount {
+                head: None,
+                size: 0
+            }
+        )
+    }
+
+    #[test]
+    fn linked_ref_count_prepend() {
+        let node_1 = LinkedRefCount::new().preprend(0);
+        let node_2_a = node_1.preprend(1);
+        let node_2_b = node_1.preprend(2);
+        let node_3 = node_2_a.preprend(3);
+
+        assert_eq!(node_1.head.as_ref().unwrap().elem, 0);
+        assert_eq!(node_2_a.head.as_ref().unwrap().elem, 1);
+        assert_eq!(node_2_b.head.as_ref().unwrap().elem, 2);
+        assert_eq!(node_3.head.as_ref().unwrap().elem, 3);
+
+        assert_eq!(node_1.size, 1);
+        assert_eq!(node_2_a.size, 2);
+        assert_eq!(node_2_b.size, 2);
+        assert_eq!(node_3.size, 3);
+
+        assert!(std::sync::Arc::ptr_eq(
+            node_2_a.head.as_ref().unwrap().next.as_ref().unwrap(),
+            node_1.head.as_ref().unwrap()
+        ));
+
+        assert!(std::sync::Arc::ptr_eq(
+            node_2_b.head.as_ref().unwrap().next.as_ref().unwrap(),
+            node_1.head.as_ref().unwrap()
+        ));
+
+        assert!(std::sync::Arc::ptr_eq(
+            node_3.head.as_ref().unwrap().next.as_ref().unwrap(),
+            node_2_a.head.as_ref().unwrap()
+        ));
+    }
+
+    #[test]
+    fn linked_ref_count_tail() {
+        let node_1 = LinkedRefCount::new().preprend(0);
+        let node_2_a = node_1.preprend(1);
+        let node_2_b = node_1.preprend(2);
+        let node_3 = node_2_a.preprend(3);
+
+        assert_eq!(
+            node_1.tail(),
+            LinkedRefCount {
+                head: None,
+                size: 0
+            }
+        );
+
+        let tail_1_a = node_2_a.tail();
+        let tail_1_b = node_2_b.tail();
+        let tail_2_a = node_3.tail();
+
+        assert_eq!(tail_1_a.size, 1);
+        assert_eq!(tail_1_b.size, 1);
+        assert_eq!(tail_2_a.size, 2);
+
+        assert!(std::sync::Arc::ptr_eq(
+            tail_1_a.head.as_ref().unwrap(),
+            node_1.head.as_ref().unwrap()
+        ));
+
+        assert!(std::sync::Arc::ptr_eq(
+            tail_1_b.head.as_ref().unwrap(),
+            node_1.head.as_ref().unwrap()
+        ));
+
+        assert!(std::sync::Arc::ptr_eq(
+            tail_2_a.head.as_ref().unwrap(),
+            node_2_a.head.as_ref().unwrap()
+        ));
+    }
+
+    // #[test]
+    // fn linked_ref_count_head() {
+    //     let node_1 = LinkedRefCount::new().preprend(0);
+    //     let node_2_a = node_1.preprend(1);
+    //     let node_2_b = node_1.preprend(2);
+    //     let node_3 = node_2_a.preprend(3);
+    //
+    //
+    // }
 }
