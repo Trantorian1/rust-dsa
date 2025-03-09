@@ -265,13 +265,16 @@ mod test {
         ));
     }
 
-    // #[test]
-    // fn linked_ref_count_head() {
-    //     let node_1 = LinkedRefCount::new().preprend(0);
-    //     let node_2_a = node_1.preprend(1);
-    //     let node_2_b = node_1.preprend(2);
-    //     let node_3 = node_2_a.preprend(3);
-    //
-    //
-    // }
+    #[test]
+    fn linked_ref_count_head() {
+        let node_1 = LinkedRefCount::new().preprend(0);
+        let node_2_a = node_1.preprend(1);
+        let node_2_b = node_1.preprend(2);
+        let node_3 = node_2_a.preprend(3);
+
+        assert_eq!(node_1.head(), Some(0).as_ref());
+        assert_eq!(node_2_a.head(), Some(1).as_ref());
+        assert_eq!(node_2_b.head(), Some(2).as_ref());
+        assert_eq!(node_3.head(), Some(3).as_ref());
+    }
 }
