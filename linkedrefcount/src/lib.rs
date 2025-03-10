@@ -180,6 +180,8 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 #[cfg(test)]
 mod test {
+    use dsa_util::DropCounter;
+
     use super::*;
 
     #[test]
@@ -276,5 +278,63 @@ mod test {
         assert_eq!(node_2_a.head(), Some(1).as_ref());
         assert_eq!(node_2_b.head(), Some(2).as_ref());
         assert_eq!(node_3.head(), Some(3).as_ref());
+    }
+
+    #[test]
+    fn linked_ref_count_iter() {
+        let mut node = LinkedRefCount::new();
+        assert_eq!(node.iter().next(), None);
+
+        for n in (0..10).rev() {
+            node = node.preprend(n);
+        }
+
+        let mut iter = node.iter();
+        for n in 0..10 {
+            assert_eq!(iter.next(), Some(n).as_ref());
+        }
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn linked_ref_count_debug() {
+        let mut node = LinkedRefCount::new();
+        for n in (0..10).rev() {
+            node = node.preprend(n);
+        }
+
+        assert_eq!(&format!("{node:?}"), "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]");
+    }
+
+    #[test]
+    fn linked_ref_count_clone() {
+        let mut node_1 = LinkedRefCount::new();
+        for n in (0..10).rev() {
+            node_1 = node_1.preprend(n);
+        }
+        let node_2 = node_1.clone();
+
+        assert_eq!(node_2, node_1);
+
+        let mut iter_1 = node_1.iter();
+        let mut iter_2 = node_2.iter();
+
+        for n in 0..10 {
+            assert_eq!(iter_1.next(), Some(n).as_ref());
+            assert_eq!(iter_2.next(), Some(n).as_ref());
+        }
+    }
+
+    #[test]
+    fn linked_ref_count_drop() {
+        let mut node = LinkedRefCount::new();
+        let counter = std::rc::Rc::default();
+
+        for n in (0..10).rev() {
+            node = node.preprend(DropCounter::new(&counter, vec![n]));
+        }
+
+        drop(node);
+        assert_eq!(counter.get(), 10);
     }
 }
