@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "linkedrefcount","linkedstack", "stackdeque", "util"]
+members = [ "linkeddeque", "linkedrefcount","linkedstack", "stackdeque", "util"]
 
 [workspace.dependencies]
 
